@@ -11,19 +11,25 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
-    "validator": "^13.11.0",
-    "dotenv": "^16.3.1",
-    "csv-writer": "^1.6.0",
-    "multer": "^1.4.5-lts.1"
+    "jspdf": "^3.0.1",
+    "multer": "^1.4.5-lts.1",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["festa-julina", "formulario", "web", "nodejs"],
+  "keywords": [
+    "festa-julina",
+    "formulario",
+    "web",
+    "nodejs"
+  ],
   "author": "Festa Julina da Grande Família",
   "license": "ISC"
 }
