@@ -223,10 +223,10 @@
         </div>
 
         <div class="actions">
-            <button class="btn btn-primary" onclick="carregarDados()">
+            <button class="btn btn-primary" id="atualizarBtn">
                 🔄 Atualizar Dados
             </button>
-            <button class="btn btn-success" onclick="downloadDados()" id="downloadBtn">
+            <button class="btn btn-success" id="downloadBtn">
                 📥 Download Lista
             </button>
         </div>
@@ -551,9 +551,29 @@
                         </div>
                         
                         <div class="no-print">
-                            <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-                            <button onclick="window.close()">❌ Fechar</button>
+                            <button id="printBtn">🖨️ Imprimir / Salvar PDF</button>
+                            <button id="closeBtn">❌ Fechar</button>
                         </div>
+                        
+                        <script>
+                            // Event listeners para os botões (CSP compliant)
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const printBtn = document.getElementById('printBtn');
+                                const closeBtn = document.getElementById('closeBtn');
+                                
+                                if (printBtn) {
+                                    printBtn.addEventListener('click', function() {
+                                        window.print();
+                                    });
+                                }
+                                
+                                if (closeBtn) {
+                                    closeBtn.addEventListener('click', function() {
+                                        window.close();
+                                    });
+                                }
+                            });
+                        </script>
                     </body>
                     </html>
                 `;
@@ -578,6 +598,48 @@
 
         // Atualizar automaticamente a cada 30 segundos
         setInterval(carregarDados, 30000);
+
+        // Adicionar event listeners para os botões (CSP compliant)
+        document.addEventListener('DOMContentLoaded', function() {
+            const atualizarBtn = document.getElementById('atualizarBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (atualizarBtn) {
+                atualizarBtn.addEventListener('click', carregarDados);
+            }
+            
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', downloadDados);
+            }
+        });
+
+        // Se o DOM já estiver carregado, adicionar listeners imediatamente
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                const atualizarBtn = document.getElementById('atualizarBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                
+                if (atualizarBtn) {
+                    atualizarBtn.addEventListener('click', carregarDados);
+                }
+                
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', downloadDados);
+                }
+            });
+        } else {
+            // DOM já carregado
+            const atualizarBtn = document.getElementById('atualizarBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (atualizarBtn) {
+                atualizarBtn.addEventListener('click', carregarDados);
+            }
+            
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', downloadDados);
+            }
+        }
     </script>
 </body>
 </html>

@@ -184,8 +184,14 @@ const helmetConfig = helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            scriptSrc: ["'self'", "'unsafe-inline'"], // Adicionado unsafe-inline
+            scriptSrc: ["'self'", "'unsafe-inline'"],
             connectSrc: ["'self'"],
+            scriptSrcAttr: ["'unsafe-inline'"], // Permitir event handlers inline
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            frameAncestors: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
         },
     },
     crossOriginEmbedderPolicy: false,
