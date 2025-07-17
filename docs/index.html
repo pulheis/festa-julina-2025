@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3ª Festa Julina da Grande Família - Confirmação de Presença</title>
+    <link rel="stylesheet" href="style_animated.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎉</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎉 3ª Festa Julina da Grande Família</h1>
+            <p class="subtitle">Confirme sua presença para a nossa festa!</p>
+        </header>
+
+        <main class="main-content">
+            <div class="decorations">
+                <div class="fogueira fogueira-left"></div>
+                <div class="fogueira fogueira-right"></div>
+                <div class="bandeirinhas"></div>
+            </div>
+
+            <div class="form-container" id="formContainer">
+                <form id="confirmationForm" class="form">
+                    <h2>📝 Dados para Confirmação</h2>
+                    
+                    <div class="form-group">
+                        <label for="nome">Nome Completo *</label>
+                        <input type="text" id="nome" name="nome" required 
+                               placeholder="Digite seu nome completo" 
+                               minlength="2" maxlength="100">
+                        <div class="error-message" id="nomeError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rg">RG *</label>
+                        <input type="text" id="rg" name="rg" required 
+                               placeholder="Ex: 12.345.678-9" 
+                               maxlength="12">
+                        <div class="error-message" id="rgError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <span class="btn-text">🎊 Confirmar Presença</span>
+                        <div class="loading-spinner" id="loadingSpinner"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div class="success-container" id="successContainer" style="display: none;">
+                <div class="success-message">
+                    <div class="success-icon">🎉</div>
+                    <h2>Presença Confirmada!</h2>
+                    <p>Obrigado por confirmar sua presença na nossa festa!</p>
+                    <p class="success-details">
+                        Seus dados foram salvos com sucesso.<br>
+                        Nos vemos na festa! 🎊
+                    </p>
+                    <button class="btn-back" onclick="resetForm()">
+                        ← Confirmar Outra Presença
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>💙 Feito com carinho para a Grande Família</p>
+            <p class="footer-info">
+                <span id="totalConfirmados">0</span> presenças confirmadas
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuração e validação
+        const form = document.getElementById('confirmationForm');
+        const formContainer = document.getElementById('formContainer');
+        const successContainer = document.getElementById('successContainer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const totalConfirmados = document.getElementById('totalConfirmados');
+
+        // Máscara para RG
+        const rgInput = document.getElementById('rg');
+        rgInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 9) value = value.slice(0, 9);
+            
+            if (value.length > 2) {
+                value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, '$1.$2.$3-$4');
+            } else if (value.length > 5) {
+                value = value.replace(/(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+            } else if (value.length > 2) {
+                value = value.replace(/(\d{2})(\d{0,3})/, '$1.$2');
+            }
+            
+            e.target.value = value;
+        });
+
+        // Validação em tempo real
+        function validateField(field, errorElement, validationFn, errorMessage) {
+            field.addEventListener('blur', function() {
+                if (!validationFn(this.value)) {
+                    errorElement.textContent = errorMessage;
+                    this.classList.add('error');
+                } else {
+                    errorElement.textContent = '';
+                    this.classList.remove('error');
+                }
+            });
+        }
+
+        // Validações
+        validateField(
+            document.getElementById('nome'),
+            document.getElementById('nomeError'),
+            (value) => value.trim().length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(value.trim()),
+            'Nome deve ter pelo menos 2 caracteres e conter apenas letras'
+        );
+
+        validateField(
+            document.getElementById('rg'),
+            document.getElementById('rgError'),
+            (value) => /^\d{2}\.\d{3}\.\d{3}-\d{1}$/.test(value),
+            'RG deve estar no formato XX.XXX.XXX-X'
+        );
+
+        // Carregar contador
+        function updateCounter() {
+            const confirmados = JSON.parse(localStorage.getItem('confirmacoesFestaJulina') || '[]');
+            totalConfirmados.textContent = confirmados.length;
+        }
+
+        // Salvar confirmação
+        function saveConfirmation(data) {
+            const confirmados = JSON.parse(localStorage.getItem('confirmacoesFestaJulina') || '[]');
+            
+            // Verificar se RG já existe
+            const rgExists = confirmados.some(item => item.rg === data.rg);
+            if (rgExists) {
+                throw new Error('Este RG já foi cadastrado!');
+            }
+
+            // Adicionar timestamp
+            data.timestamp = new Date().toLocaleString('pt-BR');
+            
+            // Salvar
+            confirmados.push(data);
+            localStorage.setItem('confirmacoesFestaJulina', JSON.stringify(confirmados));
+            
+            return confirmados.length;
+        }
+
+        // Envio do formulário
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validar dados
+            if (!data.nome.trim() || data.nome.trim().length < 2) {
+                document.getElementById('nomeError').textContent = 'Nome é obrigatório';
+                return;
+            }
+            
+            if (!data.rg || !/^\d{2}\.\d{3}\.\d{3}-\d{1}$/.test(data.rg)) {
+                document.getElementById('rgError').textContent = 'RG é obrigatório e deve estar no formato correto';
+                return;
+            }
+            
+            // Mostrar loading
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                // Simular processamento
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Salvar confirmação
+                const total = saveConfirmation(data);
+                
+                // Mostrar sucesso
+                formContainer.style.display = 'none';
+                successContainer.style.display = 'block';
+                
+                // Atualizar contador
+                updateCounter();
+                
+                // Scroll para o topo
+                window.scrollTo({top: 0, behavior: 'smooth'});
+                
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        });
+
+        // Reset formulário
+        function resetForm() {
+            form.reset();
+            formContainer.style.display = 'block';
+            successContainer.style.display = 'none';
+            
+            // Limpar erros
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            
+            // Scroll para o topo
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // Inicializar
+        updateCounter();
+
+        // Função para baixar dados (opcional - para o organizador)
+        function downloadData() {
+            const confirmados = JSON.parse(localStorage.getItem('confirmacoesFestaJulina') || '[]');
+            if (confirmados.length === 0) {
+                alert('Nenhuma confirmação encontrada!');
+                return;
+            }
+            
+            const csv = 'Nome,RG,Data/Hora\n' + 
+                       confirmados.map(item => `"${item.nome}","${item.rg}","${item.timestamp}"`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'confirmacoes_festa_julina.csv';
+            link.click();
+        }
+
+        // Tecla secreta para download (Ctrl+Shift+D)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                downloadData();
+            }
+        });
+    </script>
+</body>
+</html>
