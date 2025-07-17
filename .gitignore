@@ -35,3 +35,7 @@ dist/
 # Cache
 .cache/
 .parcel-cache/
+
+# Dados de teste/backup
+data/cadastros_backup_*.csv
+data/*.bak
