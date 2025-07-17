@@ -3,6 +3,56 @@ const helmet = require('helmet');
 const validator = require('validator');
 const crypto = require('crypto');
 
+// Função para validar RG brasileiro
+function validarRG(rg) {
+    // Remove caracteres não numéricos
+    const rgLimpo = rg.replace(/\D/g, '');
+    
+    // Verifica se tem 9 dígitos
+    if (rgLimpo.length !== 9) {
+        return false;
+    }
+    
+    // Verifica se não são todos os dígitos iguais
+    if (/^(\d)\1{8}$/.test(rgLimpo)) {
+        return false;
+    }
+    
+    // Cálculo do dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 8; i++) {
+        soma += parseInt(rgLimpo[i]) * (9 - i);
+    }
+    
+    let resto = soma % 11;
+    let digitoVerificador = resto < 2 ? 0 : 11 - resto;
+    
+    // Verifica se o último dígito está correto
+    return parseInt(rgLimpo[8]) === digitoVerificador;
+}
+
+// Função para validar nome completo
+function validarNomeCompleto(nome) {
+    const nomeNormalizado = nome.trim();
+    
+    // Verifica se tem pelo menos 2 palavras
+    const palavras = nomeNormalizado.split(/\s+/);
+    if (palavras.length < 2) {
+        return false;
+    }
+    
+    // Verifica se cada palavra tem pelo menos 2 caracteres
+    for (let palavra of palavras) {
+        if (palavra.length < 2) {
+            return false;
+        }
+    }
+    
+    // Verifica se contém apenas letras, espaços e acentos
+    const regexNome = /^[a-zA-ZÀ-ÿ\s]+$/;
+    return regexNome.test(nomeNormalizado);
+}
+
 // Rate limiting - limita tentativas de envio
 const createRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
@@ -29,11 +79,19 @@ const generalRateLimiter = rateLimit({
 const validateInput = (req, res, next) => {
     const { nome, rg } = req.body;
 
-    // Validar nome
+    // Validar nome completo
     if (!nome || typeof nome !== 'string' || nome.trim().length < 2) {
         return res.status(400).json({
             success: false,
-            message: 'Nome deve ter pelo menos 2 caracteres'
+            message: 'Nome completo é obrigatório'
+        });
+    }
+
+    // Validar se é nome completo (nome + sobrenome)
+    if (!validarNomeCompleto(nome)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Digite seu nome completo (nome e sobrenome)'
         });
     }
 
@@ -54,11 +112,11 @@ const validateInput = (req, res, next) => {
         });
     }
 
-    const rgNumbers = rg.replace(/\D/g, '');
-    if (rgNumbers.length < 7 || rgNumbers.length > 12) {
+    // Validar formato do RG brasileiro
+    if (!validarRG(rg)) {
         return res.status(400).json({
             success: false,
-            message: 'RG deve ter entre 7 e 12 dígitos'
+            message: 'RG inválido. Verifique se está correto.'
         });
     }
 
@@ -151,5 +209,7 @@ module.exports = {
     basicAuth,
     securityLogger,
     helmetConfig,
-    checkOrigin
+    checkOrigin,
+    validarRG,
+    validarNomeCompleto
 };

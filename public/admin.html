@@ -237,6 +237,13 @@
         async function carregarDados() {
             try {
                 const response = await fetch('/dados');
+                
+                if (response.status === 401) {
+                    alert('Sessão expirada. Por favor, faça login novamente.');
+                    window.location.reload();
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 // Atualizar estatísticas
@@ -250,12 +257,17 @@
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                document.getElementById('dadosContainer').innerHTML = `
-                    <div class="no-data">
-                        ❌ Erro ao carregar dados<br>
-                        <small>${error.message}</small>
-                    </div>
-                `;
+                if (error.message.includes('401')) {
+                    alert('Acesso não autorizado. Por favor, faça login novamente.');
+                    window.location.reload();
+                } else {
+                    document.getElementById('dadosContainer').innerHTML = `
+                        <div class="no-data">
+                            ❌ Erro ao carregar dados<br>
+                            <small>${error.message}</small>
+                        </div>
+                    `;
+                }
             }
         }
 

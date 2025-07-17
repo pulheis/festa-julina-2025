@@ -19,6 +19,31 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Credenciais do admin
+const ADMIN_USER = 'Admin';
+const ADMIN_PASSWORD = 'Felicidade2020!';
+
+// Middleware de autenticação admin
+const adminAuth = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
+        return res.status(401).json({ error: 'Acesso negado' });
+    }
+    
+    const credentials = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    const username = credentials[0];
+    const password = credentials[1];
+    
+    if (username === ADMIN_USER && password === ADMIN_PASSWORD) {
+        next();
+    } else {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+};
+
 // Configurar diretório de dados
 const DATA_DIR = path.join(__dirname, 'data');
 const CSV_FILE = path.join(DATA_DIR, 'cadastros.csv');
@@ -131,8 +156,8 @@ app.get('/stats', (req, res) => {
     res.json(stats);
 });
 
-// Endpoint para download
-app.get('/download', (req, res) => {
+// Endpoint para download (protegido)
+app.get('/download', adminAuth, (req, res) => {
     try {
         // Gerar CSV a partir dos dados em memória
         const csvHeaders = 'ID,Nome,RG,Data/Hora,IP,User-Agent\n';
@@ -153,13 +178,18 @@ app.get('/download', (req, res) => {
     }
 });
 
-// Endpoint para visualizar dados
-app.get('/dados', (req, res) => {
+// Endpoint para visualizar dados (protegido)
+app.get('/dados', adminAuth, (req, res) => {
     res.json({
         total: dadosMemoria.length,
         dados: dadosMemoria,
         stats: stats
     });
+});
+
+// Endpoint para servir página admin (protegido)
+app.get('/admin.html', adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 app.post('/enviar', createRateLimiter, validateInput, async (req, res) => {

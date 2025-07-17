@@ -72,6 +72,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Função para validar RG brasileiro
+    function validarRG(rg) {
+        // Remove caracteres não numéricos
+        const rgLimpo = rg.replace(/\D/g, '');
+        
+        // Verifica se tem 9 dígitos
+        if (rgLimpo.length !== 9) {
+            return false;
+        }
+        
+        // Verifica se não são todos os dígitos iguais
+        if (/^(\d)\1{8}$/.test(rgLimpo)) {
+            return false;
+        }
+        
+        // Cálculo do dígito verificador
+        let soma = 0;
+        for (let i = 0; i < 8; i++) {
+            soma += parseInt(rgLimpo[i]) * (9 - i);
+        }
+        
+        let resto = soma % 11;
+        let digitoVerificador = resto < 2 ? 0 : 11 - resto;
+        
+        // Verifica se o último dígito está correto
+        return parseInt(rgLimpo[8]) === digitoVerificador;
+    }
+
+    // Função para validar nome completo
+    function validarNomeCompleto(nome) {
+        const nomeNormalizado = nome.trim();
+        
+        // Verifica se tem pelo menos 2 palavras
+        const palavras = nomeNormalizado.split(/\s+/);
+        if (palavras.length < 2) {
+            return false;
+        }
+        
+        // Verifica se cada palavra tem pelo menos 2 caracteres
+        for (let palavra of palavras) {
+            if (palavra.length < 2) {
+                return false;
+            }
+        }
+        
+        // Verifica se contém apenas letras, espaços e acentos
+        const regexNome = /^[a-zA-ZÀ-ÿ\s]+$/;
+        return regexNome.test(nomeNormalizado);
+    }
+
     // Função para validar formulário
     function validateForm() {
         const nome = document.getElementById('nome').value.trim();
@@ -82,8 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
-        if (nome.length < 3) {
-            showMessage('Nome deve ter pelo menos 3 caracteres', 'error');
+        if (!validarNomeCompleto(nome)) {
+            showMessage('Digite seu nome completo (nome e sobrenome)', 'error');
             return false;
         }
 
@@ -92,8 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
-        if (rg.replace(/\D/g, '').length < 7) {
-            showMessage('RG deve ter pelo menos 7 dígitos', 'error');
+        if (!validarRG(rg)) {
+            showMessage('RG inválido. Verifique se está correto.', 'error');
             return false;
         }
 
