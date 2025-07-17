@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Confirmações da Festa Julina</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -228,8 +227,11 @@
             <button class="btn btn-primary" onclick="carregarDados()">
                 🔄 Atualizar Dados
             </button>
-            <button class="btn btn-success" onclick="downloadPDF()" id="downloadPDFBtn">
-                � Download PDF
+            <button class="btn btn-success" onclick="downloadCSV()" id="downloadBtn">
+                📥 Download CSV
+            </button>
+            <button class="btn btn-primary" onclick="printList()" id="printListBtn">
+                �️ Imprimir Lista
             </button>
         </div>
 
@@ -245,9 +247,6 @@
     </div>
 
     <script>
-        // Variável global para armazenar dados atuais
-        window.dadosAtuais = [];
-
         // Função para carregar dados
         async function carregarDados() {
             try {
@@ -260,9 +259,6 @@
                 }
                 
                 const data = await response.json();
-                
-                // Armazenar dados globalmente
-                window.dadosAtuais = data.dados || [];
                 
                 // Atualizar estatísticas
                 document.getElementById('totalConfirmacoes').textContent = data.total;
@@ -337,125 +333,89 @@
             container.innerHTML = html;
         }
 
-        // Função para download PDF
-        function downloadPDF() {
-            const downloadBtn = document.getElementById('downloadPDFBtn');
-            const originalText = downloadBtn.innerHTML;
+        // Função para download CSV
+        function downloadCSV() {
+            window.location.href = '/download';
+        }
+
+        // Função para imprimir lista em PDF
+        function printList() {
+            const dados = window.dadosAtuais || [];
             
-            try {
-                // Mostrar feedback de carregamento
-                downloadBtn.innerHTML = '⏳ Gerando PDF...';
-                downloadBtn.disabled = true;
-                
-                // Obter dados da tabela atual
-                const dados = window.dadosAtuais || [];
-                
-                if (dados.length === 0) {
-                    alert('Nenhum dado disponível para gerar PDF. Clique em "Atualizar Dados" primeiro.');
-                    downloadBtn.innerHTML = originalText;
-                    downloadBtn.disabled = false;
-                    return;
-                }
-                
-                // Criar novo documento PDF
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // Configurar fonte
-                doc.setFont('helvetica', 'normal');
-                
-                // Título
-                doc.setFontSize(20);
-                doc.text('3ª Festa Julina da Grande Família', 20, 20);
-                
-                doc.setFontSize(16);
-                doc.text('Lista de Confirmações de Presença', 20, 35);
-                
-                // Data e hora da geração
-                const agora = new Date().toLocaleString('pt-BR');
-                doc.setFontSize(10);
-                doc.text(`Gerado em: ${agora}`, 20, 45);
-                
-                // Total de confirmações
-                doc.setFontSize(12);
-                doc.text(`Total de confirmações: ${dados.length}`, 20, 55);
-                
-                // Cabeçalho da tabela
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Nome Completo', 20, 70);
-                doc.text('RG', 120, 70);
-                
-                // Linha separadora
-                doc.line(20, 72, 190, 72);
-                
-                // Dados
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                
-                let yPos = 80;
-                const lineHeight = 8;
-                const maxY = 270; // Margem inferior da página
-                
-                dados.forEach((item, index) => {
-                    // Verificar se precisa de nova página
-                    if (yPos > maxY) {
-                        doc.addPage();
-                        yPos = 20;
-                        
-                        // Repetir cabeçalho na nova página
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(12);
-                        doc.text('Nome Completo', 20, yPos);
-                        doc.text('RG', 120, yPos);
-                        doc.line(20, yPos + 2, 190, yPos + 2);
-                        
-                        yPos += 10;
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(10);
-                    }
-                    
-                    // Truncar nome se muito longo
-                    let nome = item.nome || '';
-                    if (nome.length > 35) {
-                        nome = nome.substring(0, 32) + '...';
-                    }
-                    
-                    // Adicionar linha com dados
-                    doc.text(nome, 20, yPos);
-                    doc.text(item.rg || '', 120, yPos);
-                    
-                    yPos += lineHeight;
-                });
-                
-                // Rodapé
-                const totalPages = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.text(`Página ${i} de ${totalPages}`, 20, 285);
-                    doc.text('3ª Festa Julina da Grande Família', 120, 285);
-                }
-                
-                // Salvar PDF
-                const nomeArquivo = `confirmacoes_festa_julina_${new Date().toISOString().slice(0, 10)}.pdf`;
-                doc.save(nomeArquivo);
-                
-                // Feedback de sucesso
-                downloadBtn.innerHTML = '✅ PDF gerado!';
-                setTimeout(() => {
-                    downloadBtn.innerHTML = originalText;
-                    downloadBtn.disabled = false;
-                }, 2000);
-                
-            } catch (error) {
-                console.error('Erro ao gerar PDF:', error);
-                alert('Erro ao gerar PDF. Tente novamente.');
-                
-                // Restaurar botão
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
+            if (dados.length === 0) {
+                alert('Nenhum dado disponível. Clique em "Atualizar Dados" primeiro.');
+                return;
             }
+            
+            // Criar nova janela para impressão
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            // Conteúdo HTML para impressão
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Lista de Confirmações - Festa Julina</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #ff6b6b; text-align: center; margin-bottom: 10px; }
+                        h2 { color: #333; text-align: center; margin-bottom: 20px; }
+                        .info { margin-bottom: 20px; font-size: 12px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #ff6b6b; color: white; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>🎉 3ª Festa Julina da Grande Família</h1>
+                    <h2>Lista de Confirmações de Presença</h2>
+                    
+                    <div class="info">
+                        <p><strong>Data de geração:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                        <p><strong>Total de confirmações:</strong> ${dados.length}</p>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome Completo</th>
+                                <th>RG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dados.map(item => `
+                                <tr>
+                                    <td>${item.nome || ''}</td>
+                                    <td>${item.rg || ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p>3ª Festa Julina da Grande Família - Lista gerada automaticamente</p>
+                    </div>
+                    
+                    <div class="no-print" style="text-align: center; margin-top: 20px;">
+                        <button onclick="window.print()" style="background: #ff6b6b; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            🖨️ Imprimir / Salvar como PDF
+                        </button>
+                        <button onclick="window.close()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                            ❌ Fechar
+                        </button>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
         }
 
         // Carregar dados na inicialização
