@@ -168,14 +168,22 @@ app.get('/download', adminAuth, (req, res) => {
         
         const csvContent = csvHeaders + csvData;
         
-        res.setHeader('Content-Type', 'text/csv');
+        // Headers otimizados para download em diferentes navegadores
+        res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Content-Disposition', 'attachment; filename="cadastros_festa_julina.csv"');
-        res.send(csvContent);
+        res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8'));
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        
+        // Enviar o conteúdo
+        res.status(200).send(csvContent);
         
         console.log(`Download realizado: ${dadosMemoria.length} registros`);
     } catch (error) {
         console.error('Erro ao gerar download:', error);
-        res.status(500).json({ success: false, message: 'Erro ao gerar download' });
+        res.status(500).send('Erro ao gerar download');
     }
 });
 
