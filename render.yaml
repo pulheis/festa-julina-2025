@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: festa-julina-2025
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: true
+    disk:
+      name: festa-julina-disk
+      mountPath: /app/data
+      sizeGB: 1

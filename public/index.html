@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Acesso - 3ª Festa Julina</title>
+    <link rel="stylesheet" href="style_animated.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="festa-decoracao">
+                <i class="fas fa-fire"></i>
+                <i class="fas fa-fire"></i>
+                <i class="fas fa-fire"></i>
+            </div>
+            <h1>Formulário de Acesso</h1>
+            <h2>3ª Festa Julina da Grande Família</h2>
+            <div class="bandeirinhas">
+                <span class="bandeirinha"></span>
+                <span class="bandeirinha"></span>
+                <span class="bandeirinha"></span>
+                <span class="bandeirinha"></span>
+                <span class="bandeirinha"></span>
+            </div>
+        </div>
+
+        <div class="status-container">
+            <div id="csv-status" class="status-item">
+                <i class="fas fa-clipboard-check"></i>
+                <span id="status-text">Pronto para receber suas informações!</span>
+            </div>
+        </div>
+
+        <form id="cadastro-form" class="form-container">
+            <div class="form-group">
+                <label for="nome">
+                    <i class="fas fa-user"></i>
+                    Nome Completo
+                </label>
+                <input type="text" id="nome" name="nome" required placeholder="Digite seu nome completo">
+            </div>
+
+            <div class="form-group">
+                <label for="rg">
+                    <i class="fas fa-id-card"></i>
+                    RG
+                </label>
+                <input type="text" id="rg" name="rg" required placeholder="Digite seu RG" maxlength="20">
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i>
+                Enviar
+            </button>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Enviando suas informações...</p>
+        </div>
+
+        <div id="success-screen" class="success-screen" style="display: none;">
+            <div class="success-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Obrigado!</h2>
+                <p>Suas informações foram enviadas com sucesso!</p>
+                <p class="success-subtitle">Nos vemos na festa! 🎉</p>
+                <div class="festa-emojis">
+                    <span>🎪</span>
+                    <span>🌽</span>
+                    <span>🎵</span>
+                    <span>💃</span>
+                    <span>🕺</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+    </div>
+
+    <footer>
+        <p>© 2025 - 3ª Festa Julina da Grande Família | Feito com ❤️ para nossa família</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
