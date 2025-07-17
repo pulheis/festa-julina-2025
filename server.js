@@ -36,7 +36,8 @@ const adminAuth = (req, res, next) => {
     const username = credentials[0];
     const password = credentials[1];
     
-    if (username === ADMIN_USER && password === ADMIN_PASSWORD) {
+    // Verificação case-insensitive para o usuário
+    if (username.toLowerCase() === ADMIN_USER.toLowerCase() && password === ADMIN_PASSWORD) {
         next();
     } else {
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');

@@ -5,7 +5,7 @@
 ### 🌐 **URL**: https://festa-julina-2025.onrender.com/admin.html
 
 ### 🔑 **Credenciais**:
-- **Usuário**: `Admin`
+- **Usuário**: `Admin` ou `admin` (case-insensitive)
 - **Senha**: `Felicidade2020!`
 
 ### 📋 **Como Acessar**:
