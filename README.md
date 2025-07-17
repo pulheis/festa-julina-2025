@@ -1,53 +1,38 @@
-# Formulário WhatsApp
+# 🎉 3ª Festa Julina da Grande Família - Formulário Web
 
-Aplicação web para coleta de dados (Nome e RG) com envio automático para WhatsApp.
+Uma aplicação web temática para coleta de dados dos convidados da 3ª Festa Julina da Grande Família.
 
-## Características
+## 🌟 Características
 
-- Interface moderna e responsiva
-- Validação de campos em tempo real
-- Máscaras para RG e telefone
-- Conexão com WhatsApp Web
-- QR Code para autenticação
-- Envio automático de mensagens formatadas
+- **Design temático animado** com fogueiras, bandeirinhas e animações CSS
+- **Formulário simples** com Nome Completo e RG
+- **Salvamento em CSV** local para controle de convidados
+- **Responsivo** para mobile e desktop
+- **Segurança** com rate limiting e validação de dados
+- **Tela de agradecimento** animada após envio
 
-## Instalação
+## 🚀 Deploy
 
-1. Instale as dependências:
-```bash
-npm install
-```
+Esta aplicação está configurada para deploy automático no Render.com:
 
-2. Execute a aplicação:
-```bash
-npm start
-```
+1. Conecte este repositório ao Render
+2. A aplicação será automaticamente construída e implantada
+3. Acesse através da URL fornecida pelo Render
 
-3. Acesse no navegador:
-- Local: http://localhost:3000
-- Rede: http://seu-ip:3000
+## 📱 Uso
 
-## Primeira Configuração
+1. Acesse a URL da aplicação
+2. Preencha o formulário com Nome Completo e RG
+3. Clique em "Confirmar Presença"
+4. Receba a confirmação animada
 
-1. Ao iniciar a aplicação, será exibido um QR Code
-2. Abra o WhatsApp no seu celular
-3. Vá em Menu (3 pontinhos) > WhatsApp Web
-4. Escaneie o QR Code exibido na tela
-5. Aguarde a confirmação de conexão
+## 🛠️ Tecnologias
 
-## Como Usar
-
-1. Preencha o Nome completo
-2. Digite o RG (será formatado automaticamente)
-3. Informe o número do WhatsApp (com DDD)
-4. Clique em "Enviar para WhatsApp"
-
-## Tecnologias Utilizadas
-
-- **Backend**: Node.js, Express
-- **Frontend**: HTML5, CSS3, JavaScript
-- **WhatsApp**: whatsapp-web.js
-- **QR Code**: qrcode
+- **Backend**: Node.js + Express
+- **Frontend**: HTML5, CSS3 (animado), JavaScript
+- **Segurança**: Helmet, CORS, Rate Limiting
+- **Validação**: Validator.js
+- **Armazenamento**: CSV local
 - **Estilos**: Font Awesome, Google Fonts
 
 ## Acesso Externo
@@ -73,6 +58,34 @@ forms/
 ├── package.json        # Dependências
 └── README.md          # Este arquivo
 ```
+
+## 📋 Estrutura
+
+```
+├── server.js           # Servidor principal
+├── security.js         # Middleware de segurança
+├── public/             # Arquivos estáticos
+│   ├── index.html      # Página principal
+│   ├── style_animated.css  # Estilos animados
+│   └── script.js       # JavaScript do frontend
+├── data/               # Dados salvos
+│   └── cadastros.csv   # Arquivo de cadastros
+├── docs/               # Documentação
+└── render.yaml         # Configuração do Render
+```
+
+## 🎭 Tema Julina
+
+O design inclui:
+- Fogueiras animadas
+- Bandeirinhas coloridas
+- Fundo com padrão xadrez
+- Animações suaves
+- Cores típicas de festa junina
+
+---
+
+**Feito com ❤️ para a 3ª Festa Julina da Grande Família**
 
 ## Funcionalidades
 
