@@ -76,6 +76,23 @@ if (!fs.existsSync(CSV_FILE)) {
     });
 }
 
+// Middleware para proteger páginas admin
+app.use('/admin.html', adminAuth, (req, res, next) => {
+    // CSP mais permissivo apenas para a página admin
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: https:; " +
+        "font-src 'self' https:; " +
+        "connect-src 'self';"
+    );
+    next();
+});
+
+// Middleware para proteger scripts do admin
+app.use('/admin-script.js', adminAuth);
+
 // Configurar proxy reverso (importante para rate limiting)
 app.set('trust proxy', 1);
 
