@@ -74,13 +74,45 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Variáveis globais para estatísticas
+// Variáveis globais para estatísticas e dados
 let stats = {
     totalSubmissions: 0,
     successfulSubmissions: 0,
     failedSubmissions: 0,
     lastSubmission: null
 };
+
+// Array para manter dados em memória (backup para sistemas efêmeros)
+let dadosMemoria = [];
+
+// Função para carregar dados existentes
+function carregarDados() {
+    try {
+        if (fs.existsSync(CSV_FILE)) {
+            const csvData = fs.readFileSync(CSV_FILE, 'utf8');
+            const linhas = csvData.split('\n').filter(linha => linha.trim());
+            
+            dadosMemoria = linhas.map(linha => {
+                const [id, nome, rg, dataHora, ip, userAgent] = linha.split(',');
+                return {
+                    id: id?.replace(/"/g, ''),
+                    nome: nome?.replace(/"/g, ''),
+                    rg: rg?.replace(/"/g, ''),
+                    dataHora: dataHora?.replace(/"/g, ''),
+                    ip: ip?.replace(/"/g, ''),
+                    userAgent: userAgent?.replace(/"/g, '')
+                };
+            });
+            
+            console.log(`${dadosMemoria.length} registros carregados do arquivo CSV`);
+        }
+    } catch (error) {
+        console.log('Erro ao carregar dados existentes:', error.message);
+    }
+}
+
+// Carregar dados na inicialização
+carregarDados();
 
 // Rotas
 app.get('/', (req, res) => {
@@ -99,17 +131,35 @@ app.get('/stats', (req, res) => {
     res.json(stats);
 });
 
+// Endpoint para download
 app.get('/download', (req, res) => {
-    if (fs.existsSync(CSV_FILE)) {
-        res.download(CSV_FILE, 'cadastros.csv', (err) => {
-            if (err) {
-                console.error('Erro ao fazer download:', err);
-                res.status(500).json({ success: false, message: 'Erro ao fazer download' });
-            }
-        });
-    } else {
-        res.status(404).json({ success: false, message: 'Arquivo não encontrado' });
+    try {
+        // Gerar CSV a partir dos dados em memória
+        const csvHeaders = 'ID,Nome,RG,Data/Hora,IP,User-Agent\n';
+        const csvData = dadosMemoria.map(item => 
+            `"${item.id}","${item.nome}","${item.rg}","${item.dataHora}","${item.ip}","${item.userAgent}"`
+        ).join('\n');
+        
+        const csvContent = csvHeaders + csvData;
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="cadastros_festa_julina.csv"');
+        res.send(csvContent);
+        
+        console.log(`Download realizado: ${dadosMemoria.length} registros`);
+    } catch (error) {
+        console.error('Erro ao gerar download:', error);
+        res.status(500).json({ success: false, message: 'Erro ao gerar download' });
     }
+});
+
+// Endpoint para visualizar dados
+app.get('/dados', (req, res) => {
+    res.json({
+        total: dadosMemoria.length,
+        dados: dadosMemoria,
+        stats: stats
+    });
 });
 
 app.post('/enviar', createRateLimiter, validateInput, async (req, res) => {
@@ -124,7 +174,7 @@ app.post('/enviar', createRateLimiter, validateInput, async (req, res) => {
         const userAgent = req.get('User-Agent') || 'Unknown';
         const dataHora = new Date().toLocaleString('pt-BR');
 
-        // Dados para salvar no CSV
+        // Dados para salvar
         const registro = {
             id,
             nome,
@@ -134,24 +184,35 @@ app.post('/enviar', createRateLimiter, validateInput, async (req, res) => {
             userAgent
         };
 
-        // Salvar no CSV
-        await csvWriter.writeRecords([registro]);
+        // Salvar em memória primeiro
+        dadosMemoria.push(registro);
+
+        // Tentar salvar no arquivo CSV
+        try {
+            await csvWriter.writeRecords([registro]);
+            console.log(`Dados salvos no arquivo CSV: ${CSV_FILE}`);
+        } catch (fileError) {
+            console.warn('Aviso: Não foi possível salvar no arquivo CSV (sistema efêmero):', fileError.message);
+        }
 
         // Atualizar estatísticas
         stats.totalSubmissions++;
         stats.successfulSubmissions++;
         stats.lastSubmission = dataHora;
 
-        console.log(`[${dataHora}] Novo cadastro salvo: ${nome} (${rg}) - IP: ${ip}`);
+        console.log(`[${dataHora}] Novo cadastro salvo em memória: ${nome} (${rg}) - IP: ${ip}`);
+        console.log(`Total de registros: ${dadosMemoria.length}`);
 
         res.json({ 
             success: true, 
-            message: 'Dados salvos com sucesso no arquivo CSV!',
-            id: id
+            message: 'Dados salvos com sucesso!',
+            id: id,
+            total: dadosMemoria.length
         });
 
     } catch (error) {
         console.error('Erro ao salvar dados:', error);
+        stats.totalSubmissions++;
         stats.failedSubmissions++;
         
         res.status(500).json({ 
@@ -167,4 +228,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Acesse: http://localhost:${PORT}`);
     console.log(`Para acesso externo: http://seu-ip:${PORT}`);
     console.log(`Arquivo CSV: ${CSV_FILE}`);
+    console.log(`Dados em memória: ${dadosMemoria.length} registros`);
+    console.log(`Endpoint para dados: /dados`);
+    console.log(`Endpoint para download: /download`);
 });

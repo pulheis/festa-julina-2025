@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Confirmações da Festa Julina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .actions {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .data-section {
+            padding: 30px;
+        }
+
+        .data-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #ff6b6b;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 3ª Festa Julina da Grande Família</h1>
+            <p>Painel Administrativo - Confirmações de Presença</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalConfirmacoes">-</div>
+                <div class="stat-label">Total de Confirmações</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubmissoes">-</div>
+                <div class="stat-label">Total de Submissões</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="ultimaConfirmacao">-</div>
+                <div class="stat-label">Última Confirmação</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="carregarDados()">
+                🔄 Atualizar Dados
+            </button>
+            <button class="btn btn-success" onclick="downloadCSV()">
+                📥 Download CSV
+            </button>
+        </div>
+
+        <div class="data-section">
+            <h2>📋 Lista de Confirmações</h2>
+            <div id="dadosContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando dados...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para carregar dados
+        async function carregarDados() {
+            try {
+                const response = await fetch('/dados');
+                const data = await response.json();
+                
+                // Atualizar estatísticas
+                document.getElementById('totalConfirmacoes').textContent = data.total;
+                document.getElementById('totalSubmissoes').textContent = data.stats.totalSubmissions;
+                document.getElementById('ultimaConfirmacao').textContent = 
+                    data.stats.lastSubmission || 'Nenhuma';
+                
+                // Atualizar tabela
+                atualizarTabela(data.dados);
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                document.getElementById('dadosContainer').innerHTML = `
+                    <div class="no-data">
+                        ❌ Erro ao carregar dados<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Função para atualizar tabela
+        function atualizarTabela(dados) {
+            const container = document.getElementById('dadosContainer');
+            
+            if (dados.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        📝 Nenhuma confirmação ainda<br>
+                        <small>As confirmações aparecerão aqui conforme forem chegando</small>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>RG</th>
+                                <th>Data/Hora</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            dados.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.nome}</td>
+                        <td>${item.rg}</td>
+                        <td>${item.dataHora}</td>
+                        <td>${item.ip}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Função para download CSV
+        function downloadCSV() {
+            window.open('/download', '_blank');
+        }
+
+        // Carregar dados na inicialização
+        carregarDados();
+
+        // Atualizar automaticamente a cada 30 segundos
+        setInterval(carregarDados, 30000);
+    </script>
+</body>
+</html>
