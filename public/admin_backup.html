@@ -6,7 +6,28 @@
     <title>Admin - Confirmações da Festa Julina</title>
     <style>
         * {
-            margin: 0;
+        <div clas            <button class="btn btn-success" onclick="downloadCSV()" id="downloadBtn">
+                📥 Download CSV
+            </button>
+            <button class="btn btn-success" onclick="downloadPDF()" id="downloadPdfBtn">
+                📄 Download PDF
+            </button>
+            <button class="btn btn-primary" onclick="printList()" id="printListBtn">
+                🖨️ Imprimir Lista
+            </button>ions">
+            <button class="btn btn-primary" onclick="carregarDados()">
+                🔄 Atualizar Dados
+            </button>
+            <button class="btn btn-success" onclick="downloadCSV()" id="downloadBtn">
+                📥 Download CSV
+            </button>
+            <button class="btn btn-success" onclick="downloadPDF()" id="downloadPdfBtn">
+                📄 Download PDF
+            </button>
+            <button class="btn btn-primary" onclick="printList()" id="printListBtn">
+                🖨️ Imprimir Lista
+            </button>
+        </div> margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
@@ -83,10 +104,6 @@
             font-size: 1em;
             font-weight: bold;
             transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-primary {
@@ -112,6 +129,11 @@
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:disabled:hover {
+            background: #4caf50;
             transform: none !important;
         }
 
@@ -226,8 +248,11 @@
             <button class="btn btn-primary" onclick="carregarDados()">
                 🔄 Atualizar Dados
             </button>
-            <button class="btn btn-success" onclick="downloadDados()" id="downloadBtn">
-                📥 Download Lista
+            <button class="btn btn-success" onclick="downloadCSV()" id="downloadBtn">
+                📥 Download CSV
+            </button>
+            <button class="btn btn-primary" onclick="printList()" id="printListBtn">
+                �️ Imprimir Lista
             </button>
         </div>
 
@@ -243,9 +268,6 @@
     </div>
 
     <script>
-        // Dados globais
-        let dadosAtuais = [];
-
         // Função para carregar dados
         async function carregarDados() {
             try {
@@ -258,7 +280,6 @@
                 }
                 
                 const data = await response.json();
-                dadosAtuais = data.dados || [];
                 
                 // Atualizar estatísticas
                 document.getElementById('totalConfirmacoes').textContent = data.total;
@@ -267,16 +288,21 @@
                     data.stats.lastSubmission || 'Nenhuma';
                 
                 // Atualizar tabela
-                atualizarTabela(dadosAtuais);
+                atualizarTabela(data.dados);
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                document.getElementById('dadosContainer').innerHTML = `
-                    <div class="no-data">
-                        ❌ Erro ao carregar dados<br>
-                        <small>${error.message}</small>
-                    </div>
-                `;
+                if (error.message.includes('401')) {
+                    alert('Acesso não autorizado. Por favor, faça login novamente.');
+                    window.location.reload();
+                } else {
+                    document.getElementById('dadosContainer').innerHTML = `
+                        <div class="no-data">
+                            ❌ Erro ao carregar dados<br>
+                            <small>${error.message}</small>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -311,10 +337,10 @@
             dados.forEach(item => {
                 html += `
                     <tr>
-                        <td>${item.nome || ''}</td>
-                        <td>${item.rg || ''}</td>
-                        <td>${item.dataHora || ''}</td>
-                        <td>${item.ip || ''}</td>
+                        <td>${item.nome}</td>
+                        <td>${item.rg}</td>
+                        <td>${item.dataHora}</td>
+                        <td>${item.ip}</td>
                     </tr>
                 `;
             });
@@ -328,143 +354,77 @@
             container.innerHTML = html;
         }
 
-        // Função unificada para download que funciona em ambiente externo
-        function downloadDados() {
-            const btn = document.getElementById('downloadBtn');
+        // Função para download CSV
+        function downloadCSV() {
+            window.location.href = '/download';
+        }
+
+        // Função para download PDF
+        function downloadPDF() {
+            const btn = document.getElementById('downloadPdfBtn');
             const originalText = btn.innerHTML;
             
-            // Verificar se há dados
-            if (!dadosAtuais || dadosAtuais.length === 0) {
-                alert('Nenhum dado disponível. Clique em "Atualizar Dados" primeiro.');
-                return;
-            }
-            
-            btn.innerHTML = '⏳ Gerando arquivo...';
+            btn.innerHTML = '⏳ Gerando PDF...';
             btn.disabled = true;
             
-            // Gerar PDF usando jsPDF (funciona em qualquer ambiente)
-            gerarPDFLocal();
+            // Criar um link temporário para download
+            const link = document.createElement('a');
+            link.href = '/download-pdf';
+            link.download = `confirmacoes_festa_julina_${new Date().toISOString().split('T')[0]}.pdf`;
             
-            // Restaurar botão
+            // Adicionar o link ao DOM, clicar e remover
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Restaurar o botão após um delay
             setTimeout(() => {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }, 2000);
         }
 
-        // Função para gerar PDF local usando jsPDF
-        function gerarPDFLocal() {
-            // Criar conteúdo HTML para impressão
-            const dataAtual = new Date().toLocaleString('pt-BR');
-            const filename = `confirmacoes_festa_julina_${new Date().toISOString().split('T')[0]}.pdf`;
+        // Função para imprimir lista em PDF
+        function printList() {
+            const dados = window.dadosAtuais || [];
             
-            // Criar nova janela para impressão que será salva como PDF
+            if (dados.length === 0) {
+                alert('Nenhum dado disponível. Clique em "Atualizar Dados" primeiro.');
+                return;
+            }
+            
+            // Criar nova janela para impressão
             const printWindow = window.open('', '_blank', 'width=800,height=600');
             
+            // Conteúdo HTML para impressão
             const htmlContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <meta charset="UTF-8">
                     <title>Lista de Confirmações - Festa Julina</title>
                     <style>
-                        @page {
-                            size: A4;
-                            margin: 20mm;
-                        }
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 0;
-                            color: #333;
-                            line-height: 1.4;
-                        }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 30px; 
-                            border-bottom: 2px solid #ff6b6b;
-                            padding-bottom: 20px;
-                        }
-                        .header h1 { 
-                            color: #ff6b6b; 
-                            font-size: 24px;
-                            margin: 0;
-                        }
-                        .header h2 { 
-                            color: #666; 
-                            font-size: 16px;
-                            margin: 5px 0;
-                        }
-                        .info { 
-                            background: #f8f9fa;
-                            padding: 15px;
-                            border-radius: 5px;
-                            margin-bottom: 20px;
-                            font-size: 14px;
-                        }
-                        .info strong {
-                            color: #ff6b6b;
-                        }
-                        table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin-top: 20px; 
-                        }
-                        th, td { 
-                            border: 1px solid #ddd; 
-                            padding: 10px; 
-                            text-align: left; 
-                            font-size: 12px;
-                        }
-                        th { 
-                            background-color: #ff6b6b; 
-                            color: white; 
-                            font-weight: bold;
-                        }
-                        tr:nth-child(even) { 
-                            background-color: #f9f9f9; 
-                        }
-                        .footer { 
-                            margin-top: 30px; 
-                            text-align: center; 
-                            font-size: 10px; 
-                            color: #666; 
-                            border-top: 1px solid #ddd;
-                            padding-top: 15px;
-                        }
-                        .no-print { 
-                            text-align: center; 
-                            margin: 20px 0; 
-                        }
-                        .no-print button {
-                            background: #ff6b6b;
-                            color: white;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            margin: 0 10px;
-                            font-size: 14px;
-                        }
-                        .no-print button:hover {
-                            background: #ff5252;
-                        }
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #ff6b6b; text-align: center; margin-bottom: 10px; }
+                        h2 { color: #333; text-align: center; margin-bottom: 20px; }
+                        .info { margin-bottom: 20px; font-size: 12px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #ff6b6b; color: white; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
                         @media print {
+                            body { margin: 0; }
                             .no-print { display: none; }
-                            body { font-size: 12px; }
-                            table { font-size: 10px; }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <h1>🎉 3ª Festa Julina da Grande Família</h1>
-                        <h2>Lista de Confirmações de Presença</h2>
-                    </div>
+                    <h1>🎉 3ª Festa Julina da Grande Família</h1>
+                    <h2>Lista de Confirmações de Presença</h2>
                     
                     <div class="info">
-                        <p><strong>Data de geração:</strong> ${dataAtual}</p>
-                        <p><strong>Total de confirmações:</strong> ${dadosAtuais.length}</p>
+                        <p><strong>Data de geração:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                        <p><strong>Total de confirmações:</strong> ${dados.length}</p>
                     </div>
                     
                     <table>
@@ -472,15 +432,13 @@
                             <tr>
                                 <th>Nome Completo</th>
                                 <th>RG</th>
-                                <th>Data/Hora da Confirmação</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${dadosAtuais.map(item => `
+                            ${dados.map(item => `
                                 <tr>
                                     <td>${item.nome || ''}</td>
                                     <td>${item.rg || ''}</td>
-                                    <td>${item.dataHora || ''}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -488,12 +446,15 @@
                     
                     <div class="footer">
                         <p>3ª Festa Julina da Grande Família - Lista gerada automaticamente</p>
-                        <p>Documento gerado em: ${dataAtual}</p>
                     </div>
                     
-                    <div class="no-print">
-                        <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-                        <button onclick="window.close()">❌ Fechar</button>
+                    <div class="no-print" style="text-align: center; margin-top: 20px;">
+                        <button onclick="window.print()" style="background: #ff6b6b; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            🖨️ Imprimir / Salvar como PDF
+                        </button>
+                        <button onclick="window.close()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                            ❌ Fechar
+                        </button>
                     </div>
                 </body>
                 </html>
@@ -501,9 +462,6 @@
             
             printWindow.document.write(htmlContent);
             printWindow.document.close();
-            
-            // Focar na nova janela
-            printWindow.focus();
         }
 
         // Carregar dados na inicialização

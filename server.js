@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const puppeteer = require('puppeteer');
 require('dotenv').config();
 
 // Importar middlewares de segurança
@@ -116,19 +117,20 @@ function carregarDados() {
     try {
         if (fs.existsSync(CSV_FILE)) {
             const csvData = fs.readFileSync(CSV_FILE, 'utf8');
-            const linhas = csvData.split('\n').filter(linha => linha.trim());
+            const linhas = csvData.split('\n')
+                .filter(linha => linha.trim() && !linha.startsWith('ID,Nome,RG')); // Ignorar cabeçalho e linhas vazias
             
             dadosMemoria = linhas.map(linha => {
                 const [id, nome, rg, dataHora, ip, userAgent] = linha.split(',');
                 return {
-                    id: id?.replace(/"/g, ''),
-                    nome: nome?.replace(/"/g, ''),
-                    rg: rg?.replace(/"/g, ''),
-                    dataHora: dataHora?.replace(/"/g, ''),
-                    ip: ip?.replace(/"/g, ''),
-                    userAgent: userAgent?.replace(/"/g, '')
+                    id: id?.replace(/"/g, '').trim(),
+                    nome: nome?.replace(/"/g, '').trim(),
+                    rg: rg?.replace(/"/g, '').trim(),
+                    dataHora: dataHora?.replace(/"/g, '').trim(),
+                    ip: ip?.replace(/"/g, '').trim(),
+                    userAgent: userAgent?.replace(/"/g, '').trim()
                 };
-            });
+            }).filter(item => item.id && item.nome && item.rg); // Filtrar itens válidos
             
             console.log(`${dadosMemoria.length} registros carregados do arquivo CSV`);
         }
@@ -157,7 +159,7 @@ app.get('/stats', (req, res) => {
     res.json(stats);
 });
 
-// Endpoint para download (protegido)
+// Endpoint para download CSV (protegido)
 app.get('/download', adminAuth, (req, res) => {
     try {
         // Gerar CSV a partir dos dados em memória
@@ -184,6 +186,180 @@ app.get('/download', adminAuth, (req, res) => {
     } catch (error) {
         console.error('Erro ao gerar download:', error);
         res.status(500).send('Erro ao gerar download');
+    }
+});
+
+// Endpoint para download PDF (protegido)
+app.get('/download-pdf', adminAuth, async (req, res) => {
+    let browser;
+    try {
+        console.log('Iniciando geração de PDF...');
+        
+        // Verificar se há dados
+        if (!dadosMemoria || dadosMemoria.length === 0) {
+            return res.status(400).json({ error: 'Nenhum dado disponível para gerar PDF' });
+        }
+
+        // Gerar HTML para o PDF
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Lista de Confirmações - Festa Julina</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 20px; 
+                        color: #333;
+                    }
+                    h1 { 
+                        color: #ff6b6b; 
+                        text-align: center; 
+                        margin-bottom: 10px; 
+                        font-size: 24px;
+                    }
+                    h2 { 
+                        color: #666; 
+                        text-align: center; 
+                        margin-bottom: 20px; 
+                        font-size: 16px;
+                    }
+                    .info { 
+                        margin-bottom: 20px; 
+                        font-size: 12px; 
+                        background: #f8f9fa;
+                        padding: 10px;
+                        border-radius: 5px;
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin-top: 15px; 
+                    }
+                    th, td { 
+                        border: 1px solid #ddd; 
+                        padding: 8px; 
+                        text-align: left; 
+                        font-size: 12px;
+                    }
+                    th { 
+                        background-color: #ff6b6b; 
+                        color: white; 
+                        font-weight: bold;
+                    }
+                    tr:nth-child(even) { 
+                        background-color: #f9f9f9; 
+                    }
+                    .footer { 
+                        margin-top: 30px; 
+                        text-align: center; 
+                        font-size: 10px; 
+                        color: #666; 
+                        border-top: 1px solid #ddd;
+                        padding-top: 15px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>3ª Festa Julina da Grande Família</h1>
+                <h2>Lista de Confirmações de Presença</h2>
+                
+                <div class="info">
+                    <p><strong>Data de geração:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                    <p><strong>Total de confirmações:</strong> ${dadosMemoria.length}</p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>RG</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${dadosMemoria.map(item => `
+                            <tr>
+                                <td>${item.nome || ''}</td>
+                                <td>${item.rg || ''}</td>
+                                <td>${item.dataHora || ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="footer">
+                    <p>3ª Festa Julina da Grande Família - Lista gerada automaticamente</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Configurar Puppeteer
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
+            ]
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        // Gerar PDF
+        const pdf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20px',
+                right: '20px',
+                bottom: '20px',
+                left: '20px'
+            }
+        });
+
+        // Fechar browser
+        await browser.close();
+        browser = null;
+
+        // Configurar headers para download
+        const filename = `confirmacoes_festa_julina_${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
+        // Enviar o PDF diretamente
+        res.end(pdf);
+        
+        console.log(`PDF gerado com sucesso: ${filename} (${dadosMemoria.length} registros)`);
+        
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        
+        // Fechar browser se ainda estiver aberto
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (closeError) {
+                console.error('Erro ao fechar browser:', closeError);
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Erro ao gerar PDF', 
+            message: error.message 
+        });
     }
 });
 
