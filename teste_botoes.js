@@ -30,9 +30,9 @@ async function testarBotoes() {
         });
         
         console.log('📄 Acessando painel admin...');
-        await page.goto('http://localhost:3001/admin.html', { 
+        await page.goto('https://festa-julina-2025.onrender.com/admin.html', { 
             waitUntil: 'networkidle2',
-            timeout: 10000
+            timeout: 15000
         });
         
         // Aguardar carregamento completo
