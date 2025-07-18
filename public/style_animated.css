@@ -717,46 +717,6 @@ body::before {
     }
 }
 
-.novo-cadastro-btn {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-radius: 50px;
-    cursor: pointer;
-    margin-top: 25px;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-    animation: novoCadastroSlide 1s ease-out 1.5s both;
-}
-
-@keyframes novoCadastroSlide {
-    0% {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.novo-cadastro-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-    background: linear-gradient(135deg, #20c997, #28a745);
-}
-
-.novo-cadastro-btn:active {
-    transform: translateY(-1px);
-}
-
-.novo-cadastro-btn i {
-    margin-right: 8px;
-}
-
 .message {
     padding: 20px;
     border-radius: 15px;
@@ -879,12 +839,6 @@ footer {
     
     .festa-emojis span {
         font-size: 1.5rem;
-    }
-    
-    .novo-cadastro-btn {
-        padding: 12px 25px;
-        font-size: 1rem;
-        margin-top: 20px;
     }
 }
 

@@ -52,22 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // O usuário pode fechar o navegador ou navegar para outra página
     }
 
-    // Função para permitir novos cadastros
-    window.novosCadastros = function() {
-        successScreen.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        
-        // Limpar formulário
-        form.reset();
-        
-        // Remover mensagens de erro se houver
-        const errorMessages = document.querySelectorAll('.error-message');
-        errorMessages.forEach(msg => msg.style.display = 'none');
-        
-        // Focar no primeiro campo
-        document.getElementById('nome').focus();
-    }
-
     // Função para mostrar mensagem
     function showMessage(text, type) {
         message.textContent = text;
